@@ -5,6 +5,7 @@ mod config;
 mod items;
 mod projects;
 mod request;
+mod test;
 mod time;
 
 fn main() {
@@ -35,12 +36,15 @@ impl Default for MyApp {
 impl eframe::App for MyApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::CentralPanel::default().show(ctx, |ui| {
-            ui.heading("The One Thing");
-            ui.label(self.text.clone());
-
-            if ui.button("Complete").clicked() {
-                self.text = complete();
-            }
+            ui.with_layout(egui::Layout::top_down(egui::Align::Center), |ui| {
+                ui.label("The One Thing");
+                ui.label(String::new());
+                ui.heading(self.text.clone());
+                ui.label(String::new());
+                if ui.button("Complete ✔").clicked() {
+                    self.text = complete();
+                }
+            });
         });
     }
 }
