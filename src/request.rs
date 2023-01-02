@@ -1,47 +1,21 @@
 use reqwest::blocking::Client;
 use reqwest::header::AUTHORIZATION;
 use reqwest::header::CONTENT_TYPE;
-use reqwest::header::USER_AGENT;
-use serde::Deserialize;
 use serde_json::json;
 use uuid::Uuid;
 
 use crate::config::Config;
+use crate::items;
 use crate::items::Item;
-use crate::{items, projects};
 
 #[cfg(test)]
 use mockito;
 
 // TODOIST URLS
-const QUICK_ADD_URL: &str = "/sync/v9/quick/add";
 const PROJECT_DATA_URL: &str = "/sync/v9/projects/get_data";
 const SYNC_URL: &str = "/sync/v9/sync";
-const REST_V2_TASKS_URL: &str = "/rest/v2/tasks/";
-
-// CRATES.IO URLS
-const VERSIONS_URL: &str = "/v1/crates/tod/versions";
 
 const FAKE_UUID: &str = "42963283-2bab-4b1f-bad2-278ef2b6ba2c";
-
-#[derive(Deserialize)]
-struct CargoResponse {
-    versions: Vec<Version>,
-}
-
-#[derive(Deserialize)]
-struct Version {
-    num: String,
-}
-
-/// Add a new item to the inbox with natural language support
-pub fn add_item_to_inbox(config: &Config, task: &str) -> Result<Item, String> {
-    let url = String::from(QUICK_ADD_URL);
-    let body = json!({"text": task, "auto_reminder": true});
-
-    let json = post_todoist_sync(config.token.clone(), url, body)?;
-    items::json_to_item(json)
-}
 
 /// Get a vector of all items for a project
 pub fn items_for_project(config: &Config, project_id: &str) -> Result<Vec<Item>, String> {
@@ -94,38 +68,6 @@ fn post_todoist_sync(
         Err(format!("Error: {:#?}", response.text()))
     }
 }
-
-/// Post to Todoist via REST api
-fn post_todoist_rest(
-    token: String,
-    url: String,
-    body: serde_json::Value,
-) -> Result<String, String> {
-    #[cfg(not(test))]
-    let todoist_url: &str = "https://api.todoist.com";
-
-    #[cfg(test)]
-    let todoist_url: &str = &mockito::server_url();
-
-    let request_url = format!("{}{}", todoist_url, url);
-    let authorization: &str = &format!("Bearer {}", token);
-
-    let response = Client::new()
-        .post(request_url)
-        .header(CONTENT_TYPE, "application/json")
-        .header(AUTHORIZATION, authorization)
-        .header("X-Request-Id", new_uuid())
-        .json(&body)
-        .send()
-        .or(Err("Did not get response from server"))?;
-
-    if response.status().is_success() {
-        Ok(response.text().or(Err("Could not read response text"))?)
-    } else {
-        Err(format!("Error: {:#?}", response.text()))
-    }
-}
-
 
 /// Create a new UUID, required for Todoist API
 fn new_uuid() -> String {
@@ -215,52 +157,5 @@ mod tests {
             .set_next_id(String::from("112233"));
         let response = complete_item(config);
         assert_eq!(response, Ok(String::from("✓")));
-    }
-
-    #[test]
-    fn should_move_an_item() {
-        let _m = mockito::mock("POST", "/sync/v9/sync")
-            .with_status(200)
-            .with_header("content-type", "application/json")
-            .with_body(&test::responses::sync())
-            .create();
-
-        let item = test::helpers::item_fixture();
-        let project_name = "testy";
-        let config = Config::new("12341234")
-            .unwrap()
-            .add_project(String::from(project_name), 1);
-        let response = move_item(config, item, project_name);
-        assert_eq!(response, Ok(String::from("✓")));
-    }
-
-    #[test]
-    fn should_prioritize_an_item() {
-        let item = test::helpers::item_fixture();
-        let url: &str = &format!("{}{}", "/rest/v2/tasks/", item.id);
-
-        let _m = mockito::mock("POST", url)
-            .with_status(204)
-            .with_header("content-type", "application/json")
-            .with_body(&test::responses::sync())
-            .create();
-
-        let config = Config::new("12341234").unwrap();
-        let response = update_item_priority(config, item, 4);
-        assert_eq!(response, Ok(String::from("✓")));
-    }
-
-    #[test]
-
-    fn latest_version_works() {
-        let _m = mockito::mock("GET", "/v1/crates/tod/versions")
-            .with_status(200)
-            .with_header("content-type", "application/json")
-            .with_body(&test::responses::versions())
-            .create();
-
-        let response = get_latest_version();
-
-        assert_eq!(response, Ok(String::from(VERSION)));
     }
 }

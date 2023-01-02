@@ -76,20 +76,6 @@ impl Config {
         }
     }
 
-    pub fn add_project(self, name: String, number: u32) -> Config {
-        let mut projects = self.projects;
-        projects.insert(name, number);
-
-        Config { projects, ..self }
-    }
-
-    pub fn remove_project(self, name: &str) -> Config {
-        let mut projects = self.projects;
-        projects.remove(name);
-
-        Config { projects, ..self }
-    }
-
     pub fn set_next_id(&self, next_id: String) -> Config {
         let next_id: Option<String> = Some(next_id);
 
