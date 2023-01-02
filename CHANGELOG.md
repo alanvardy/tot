@@ -1,0 +1,13 @@
+# Changelog
+
+## Unreleased
+
+- Can select a project from `tod` config
+- Added this changelog file
+- Added publish checklist
+
+## 2023-01-02 v0.1.0
+
+- Initial release
+- Displays the highest priority task in the `home` project.
+- Can complete said task and get the next one for the `home` project

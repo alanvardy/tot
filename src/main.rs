@@ -8,6 +8,8 @@ mod request;
 mod test;
 mod time;
 
+use config::Config;
+
 fn main() {
     // Log to stdout (if you run with `RUST_LOG=debug`).
     tracing_subscriber::fmt::init();
@@ -19,20 +21,33 @@ fn main() {
     eframe::run_native(
         "The One Thing",
         options,
-        Box::new(|_cc| Box::new(MyApp::default())),
+        Box::new(|_cc| Box::<MyApp>::default()),
     )
 }
 
 struct MyApp {
     text: String,
+    projects: Vec<String>,
+    project: String,
 }
 
 impl Default for MyApp {
     fn default() -> Self {
-        Self { text: get_next() }
+        let projects = projects();
+        let project = projects
+            .first()
+            .map(|f| f.to_string())
+            .unwrap_or_else(|| String::from("No projects found"));
+
+        Self {
+            text: get_next(project.clone()),
+            projects,
+            project,
+        }
     }
 }
 
+#[allow(clippy::collapsible_else_if)]
 impl eframe::App for MyApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::CentralPanel::default().show(ctx, |ui| {
@@ -42,26 +57,56 @@ impl eframe::App for MyApp {
                 ui.heading(self.text.clone());
                 ui.label(String::new());
                 if ui.button("Complete ✔").clicked() {
-                    self.text = complete();
+                    self.text = complete(self.project.clone());
+                }
+            });
+
+            ui.with_layout(egui::Layout::left_to_right(egui::Align::BOTTOM), |ui| {
+                for project in self.projects.iter() {
+                    if *project.clone() == self.project {
+                        if ui.add_enabled(false, egui::Button::new(project)).clicked() {
+                            unreachable!();
+                        }
+                    } else {
+                        if ui.button(project).clicked() {
+                            self.project = project.to_string();
+                            self.text = get_next(self.project.clone());
+                        }
+                    }
                 }
             });
         });
     }
 }
 
-fn get_next() -> String {
+fn projects() -> Vec<String> {
     match config::get_or_create(None) {
-        Ok(config) => projects::next_item(config, "home")
+        Ok(Config { projects, .. }) => {
+            let mut projects = projects
+                .keys()
+                .map(|k| k.to_owned())
+                .collect::<Vec<String>>();
+
+            projects.sort();
+            projects
+        }
+        Err(e) => vec![e],
+    }
+}
+
+fn get_next(project: String) -> String {
+    match config::get_or_create(None) {
+        Ok(config) => projects::next_item(config, &project)
             .unwrap_or_else(|_| "Could not get next item".to_string()),
         Err(e) => format!("Could not load config: {}", e),
     }
 }
 
-fn complete() -> String {
+fn complete(project: String) -> String {
     match config::get_or_create(None) {
         Ok(config) => {
             request::complete_item(config).unwrap();
-            get_next()
+            get_next(project)
         }
         Err(e) => format!("Could not load config: {}", e),
     }
