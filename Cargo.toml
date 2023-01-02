@@ -1,11 +1,10 @@
 [package]
-name = "hello_world"
+name = "tot"
+description = "A tiny GUI that displays The One Thing you need to do next"
 version = "0.1.0"
-authors = ["Emil Ernerfeldt <emil.ernerfeldt@gmail.com>"]
-license = "MIT OR Apache-2.0"
+authors = ["Alan Vardy <alan@vardy.cc>"]
+license = "MIT"
 edition = "2021"
-publish = false
-
 
 [dependencies]
 eframe = "0.20.1"
