@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use std::cmp::Reverse;
 
 use crate::config::Config;
-use crate::{config, items, request, time};
+use crate::time;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]
 pub struct Item {
@@ -109,14 +109,6 @@ impl Item {
         }
     }
 
-    /// Return the value of the due field
-    fn datetime(&self, config: &Config) -> Option<DateTime<Tz>> {
-        match self.datetimeinfo(config) {
-            Ok(DateTimeInfo::DateTime { datetime, .. }) => Some(datetime),
-            _ => None,
-        }
-    }
-
     fn priority_value(&self) -> u8 {
         match self.priority {
             2 => 1,
@@ -182,16 +174,7 @@ impl Item {
             Err(_) => false,
         }
     }
-
-    /// Returns true when it is a datetime, otherwise false
-    fn has_time(&self, config: &Config) -> bool {
-        matches!(
-            self.clone().datetimeinfo(config),
-            Ok(DateTimeInfo::DateTime { .. })
-        )
-    }
 }
-
 pub fn json_to_items(json: String) -> Result<Vec<Item>, String> {
     let result: Result<Body, _> = serde_json::from_str(&json);
     match result {
@@ -200,20 +183,8 @@ pub fn json_to_items(json: String) -> Result<Vec<Item>, String> {
     }
 }
 
-pub fn json_to_item(json: String) -> Result<Item, String> {
-    match serde_json::from_str(&json) {
-        Ok(item) => Ok(item),
-        Err(err) => Err(format!("Could not parse response for item: {:?}", err)),
-    }
-}
-
 pub fn sort_by_value(mut items: Vec<Item>, config: &Config) -> Vec<Item> {
     items.sort_by_key(|b| Reverse(b.value(config)));
-    items
-}
-
-pub fn sort_by_datetime(mut items: Vec<Item>, config: &Config) -> Vec<Item> {
-    items.sort_by_key(|i| i.datetime(config));
     items
 }
 
@@ -224,13 +195,6 @@ pub fn filter_not_in_future(items: Vec<Item>, config: &Config) -> Result<Vec<Ite
         .collect();
 
     Ok(items)
-}
-
-pub fn filter_today_and_has_time(items: Vec<Item>, config: &Config) -> Vec<Item> {
-    items
-        .into_iter()
-        .filter(|item| item.is_today(config) && item.has_time(config))
-        .collect()
 }
 
 #[cfg(test)]
