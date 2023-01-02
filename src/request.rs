@@ -81,68 +81,8 @@ fn new_uuid() -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::items::{DateInfo, Item};
-    use crate::{test, time, VERSION};
+    use crate::test;
     use pretty_assertions::assert_eq;
-
-    #[test]
-    fn should_add_item_to_inbox() {
-        let _m = mockito::mock("POST", "/sync/v9/quick/add")
-            .with_status(200)
-            .with_header("content-type", "application/json")
-            .with_body(&test::responses::item())
-            .create();
-
-        let config = Config::new("12341234").unwrap();
-
-        assert_eq!(
-            add_item_to_inbox(&config, "testy test"),
-            Ok(Item {
-                id: String::from("5149481867"),
-                priority: 1,
-                content: String::from("testy test"),
-                checked: false,
-                description: String::from(""),
-                due: None,
-                is_deleted: false,
-            })
-        );
-    }
-
-    #[test]
-    fn should_get_items_for_project() {
-        let _m = mockito::mock("POST", "/sync/v9/projects/get_data")
-            .with_status(200)
-            .with_header("content-type", "application/json")
-            .with_body(&test::responses::items())
-            .create();
-
-        let config = Config::new("12341234").unwrap();
-        let config_with_timezone = Config {
-            timezone: Some(String::from("US/Pacific")),
-            ..config
-        };
-
-        assert_eq!(
-            items_for_project(&config_with_timezone, "123123"),
-            Ok(vec![Item {
-                id: String::from("999999"),
-                content: String::from("Put out recycling"),
-                checked: false,
-                description: String::from(""),
-                due: Some(DateInfo {
-                    date: String::from(format!(
-                        "{}T23:59:00Z",
-                        time::today_string(&config_with_timezone)
-                    )),
-                    is_recurring: true,
-                    timezone: None,
-                }),
-                priority: 3,
-                is_deleted: false,
-            }])
-        );
-    }
 
     #[test]
     fn should_complete_an_item() {

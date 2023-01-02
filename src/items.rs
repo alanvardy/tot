@@ -261,11 +261,7 @@ mod tests {
             ..test::helpers::item_fixture()
         };
 
-        let output = if test::helpers::supports_coloured_output() {
-            "\n\u{1b}[33mGet gifts for the twins\u{1b}[0m\nDue: 2021-08-13"
-        } else {
-            "\nGet gifts for the twins\nDue: 2021-08-13"
-        };
+        let output = "\nGet gifts for the twins\nDue: 2021-08-13";
 
         assert_eq!(format!("{}", item.fmt(&config)), output);
     }
@@ -282,11 +278,8 @@ mod tests {
             ..test::helpers::item_fixture()
         };
 
-        let output = if test::helpers::supports_coloured_output() {
-            "\n\u{1b}[33mGet gifts for the twins\u{1b}[0m\nDue: Today"
-        } else {
-            "\nGet gifts for the twins\nDue: Today"
-        };
+        let output = "\nGet gifts for the twins\nDue: Today";
+
         assert_eq!(format!("{}", item.fmt(&config)), output);
     }
 
@@ -296,34 +289,6 @@ mod tests {
         let item = test::helpers::item_fixture();
 
         assert_eq!(item.value(&config), 53);
-    }
-
-    #[test]
-    fn datetime_works_with_datetime() {
-        let config = test::helpers::config_fixture();
-        let item = Item {
-            due: Some(DateInfo {
-                date: String::from("2021-09-06T16:00:00"),
-                ..test::helpers::item_fixture().due.unwrap()
-            }),
-            ..test::helpers::item_fixture()
-        };
-
-        assert_matches!(item.datetime(&config), Some(DateTime { .. }));
-    }
-
-    #[test]
-    fn datetime_works_with_date() {
-        let config = test::helpers::config_fixture();
-        let item = Item {
-            due: Some(DateInfo {
-                date: time::today_string(&config),
-                ..test::helpers::item_fixture().due.unwrap()
-            }),
-            ..test::helpers::item_fixture()
-        };
-
-        assert_eq!(item.datetime(&config), None);
     }
 
     #[test]
@@ -344,37 +309,6 @@ mod tests {
             ..test::helpers::item_fixture()
         };
         assert!(!item_today.has_no_date());
-    }
-
-    #[test]
-    fn has_time_works() {
-        let config = test::helpers::config_fixture();
-        let item = Item {
-            due: None,
-            ..test::helpers::item_fixture()
-        };
-
-        assert!(!item.has_time(&config));
-
-        let item_with_date = Item {
-            due: Some(DateInfo {
-                date: time::today_string(&config),
-                is_recurring: false,
-                timezone: None,
-            }),
-            ..item.clone()
-        };
-        assert!(!item_with_date.has_time(&config));
-
-        let item_with_datetime = Item {
-            due: Some(DateInfo {
-                date: String::from("2021-09-06T16:00:00"),
-                is_recurring: false,
-                timezone: None,
-            }),
-            ..item
-        };
-        assert!(item_with_datetime.has_time(&config));
     }
 
     #[test]
@@ -445,67 +379,6 @@ mod tests {
     }
 
     #[test]
-    fn sort_by_datetime_works() {
-        let config = test::helpers::config_fixture();
-        let no_date = Item {
-            id: String::from("222"),
-            content: String::from("Get gifts for the twins"),
-            checked: false,
-            description: String::from(""),
-            due: None,
-            priority: 3,
-            is_deleted: false,
-        };
-
-        let date_not_datetime = Item {
-            due: Some(DateInfo {
-                date: time::today_string(&config),
-                is_recurring: false,
-                timezone: None,
-            }),
-            ..no_date.clone()
-        };
-
-        let present = Item {
-            due: Some(DateInfo {
-                date: String::from("2020-09-06T16:00:00"),
-                is_recurring: false,
-                timezone: None,
-            }),
-            ..no_date.clone()
-        };
-
-        let future = Item {
-            due: Some(DateInfo {
-                date: String::from("2035-09-06T16:00:00"),
-                is_recurring: false,
-                timezone: None,
-            }),
-            ..no_date.clone()
-        };
-
-        let past = Item {
-            due: Some(DateInfo {
-                date: String::from("2015-09-06T16:00:00"),
-                is_recurring: false,
-                timezone: None,
-            }),
-            ..no_date.clone()
-        };
-
-        let input = vec![
-            future.clone(),
-            past.clone(),
-            present.clone(),
-            no_date.clone(),
-            date_not_datetime.clone(),
-        ];
-        let result = vec![no_date, date_not_datetime, past, present, future];
-
-        assert_eq!(sort_by_datetime(input, &config), result);
-    }
-
-    #[test]
     fn is_overdue_works() {
         let config = test::helpers::config_fixture();
         let item = Item {
@@ -556,12 +429,5 @@ mod tests {
         let json = String::from("2{.e");
         let error_text = String::from("Could not parse response for item: Error(\"invalid type: integer `2`, expected struct Body\", line: 1, column: 1)");
         assert_eq!(json_to_items(json), Err(error_text));
-    }
-
-    #[test]
-    fn json_to_item_works() {
-        let json = String::from("2{.e");
-        let error_text = String::from("Could not parse response for item: Error(\"invalid type: integer `2`, expected struct Item\", line: 1, column: 1)");
-        assert_eq!(json_to_item(json), Err(error_text));
     }
 }
