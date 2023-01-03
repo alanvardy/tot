@@ -6,6 +6,7 @@
 - Added this changelog file
 - Added publish checklist
 - Add CI
+- Add image to README.md
 
 ## 2023-01-02 v0.1.0
 
