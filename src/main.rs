@@ -26,7 +26,7 @@ fn main() {
 }
 
 struct MyApp {
-    text: String,
+    text: Option<String>,
     projects: Vec<String>,
     project: String,
 }
@@ -48,17 +48,24 @@ impl Default for MyApp {
 }
 
 #[allow(clippy::collapsible_else_if)]
+#[allow(clippy::collapsible_if)]
 impl eframe::App for MyApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::CentralPanel::default().show(ctx, |ui| {
+            let text = self
+                .text
+                .clone()
+                .unwrap_or_else(|| "\nNo tasks remaining".to_string());
             ui.with_layout(egui::Layout::top_down(egui::Align::Center), |ui| {
                 ui.label("The One Thing");
                 ui.label(String::new());
-                ui.heading(self.text.clone());
+                ui.heading(text);
                 ui.label(String::new());
-                if ui.button("Complete ✔").clicked() {
-                    self.text = complete(self.project.clone());
-                }
+                if self.text.is_some() {
+                    if ui.button("Complete ✔").clicked() {
+                        self.text = complete(self.project.clone());
+                    }
+                };
             });
 
             ui.with_layout(egui::Layout::left_to_right(egui::Align::BOTTOM), |ui| {
@@ -94,20 +101,19 @@ fn projects() -> Vec<String> {
     }
 }
 
-fn get_next(project: String) -> String {
+fn get_next(project: String) -> Option<String> {
     match config::get_or_create(None) {
-        Ok(config) => projects::next_item(config, &project)
-            .unwrap_or_else(|_| "Could not get next item".to_string()),
-        Err(e) => format!("Could not load config: {}", e),
+        Ok(config) => projects::next_item(config, &project).unwrap(),
+        Err(_e) => None,
     }
 }
 
-fn complete(project: String) -> String {
+fn complete(project: String) -> Option<String> {
     match config::get_or_create(None) {
         Ok(config) => {
             request::complete_item(config).unwrap();
             get_next(project)
         }
-        Err(e) => format!("Could not load config: {}", e),
+        Err(_e) => None,
     }
 }

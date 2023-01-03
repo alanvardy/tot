@@ -15,7 +15,7 @@ pub fn project_id(config: &Config, project_name: &str) -> Result<String, String>
 }
 
 /// Get the next item by priority and save its id to config
-pub fn next_item(config: Config, project_name: &str) -> Result<String, String> {
+pub fn next_item(config: Config, project_name: &str) -> Result<Option<String>, String> {
     let project_id = projects::project_id(&config, project_name)?;
     let items = request::items_for_project(&config, &project_id)?;
     let filtered_items = items::filter_not_in_future(items, &config)?;
@@ -26,8 +26,8 @@ pub fn next_item(config: Config, project_name: &str) -> Result<String, String> {
     match maybe_item {
         Some(item) => {
             config.set_next_id(item.id.clone()).save()?;
-            Ok(item.fmt(&config))
+            Ok(Some(item.fmt(&config)))
         }
-        None => Ok(String::from("No items on list")),
+        None => Ok(None),
     }
 }
