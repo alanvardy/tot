@@ -5,6 +5,7 @@
 - Can select a project from `tod` config
 - Added this changelog file
 - Added publish checklist
+- Add CI
 
 ## 2023-01-02 v0.1.0
 
