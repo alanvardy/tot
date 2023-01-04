@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 2023-01-04 v0.1.2
+
+- Don't show the complete button when there is no task to complete
+
 ## 2023-01-04 v0.1.1
 
 - Can select a project from `tod` config
@@ -9,7 +13,6 @@
 - Added publish checklist
 - Add CI
 - Add image to README.md
-- Don't show the complete button when there is no task to complete
 - Update dependencies
 
 ## 2023-01-02 v0.1.0
