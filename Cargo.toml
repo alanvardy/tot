@@ -1,7 +1,7 @@
 [package]
 name = "tot"
 description = "A tiny GUI that displays The One Thing you need to do next"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Alan Vardy <alan@vardy.cc>"]
 license = "MIT"
 edition = "2021"
