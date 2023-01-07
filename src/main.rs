@@ -34,10 +34,7 @@ struct MyApp {
 impl Default for MyApp {
     fn default() -> Self {
         let projects = projects();
-        let project = projects
-            .first()
-            .map(|f| f.to_string())
-            .unwrap_or_else(|| String::from("No projects found"));
+        let project = get_first_project(projects.clone());
 
         Self {
             text: get_next(project.clone()),
@@ -61,11 +58,20 @@ impl eframe::App for MyApp {
                 ui.label(String::new());
                 ui.heading(text);
                 ui.label(String::new());
-                if self.text.is_some() {
-                    if ui.button("Complete ✔").clicked() {
-                        self.text = complete(self.project.clone());
+                ui.vertical_centered(|ui| {
+                    if self.text.is_some() {
+                        if ui.button("Complete ✔").clicked() {
+                            self.text = complete(self.project.clone());
+                        }
+                        ui.label(String::new());
+                    } else {
+                        ui.label(String::new());
+                        ui.label(String::new());
+                    };
+                    if ui.button("Hide Project 🗙").clicked() {
+                        hide(self.project.clone(), self);
                     }
-                };
+                });
             });
 
             ui.with_layout(egui::Layout::left_to_right(egui::Align::BOTTOM), |ui| {
@@ -116,4 +122,26 @@ fn complete(project: String) -> Option<String> {
         }
         Err(_e) => None,
     }
+}
+
+fn hide(project: String, state: &mut MyApp) {
+    let projects: Vec<String> = state
+        .projects
+        .clone()
+        .into_iter()
+        .filter(|s| s != &project)
+        .collect();
+
+    let project = get_first_project(projects.clone());
+
+    state.projects = projects;
+    state.project = project.clone();
+    state.text = get_next(project);
+}
+
+fn get_first_project(projects: Vec<String>) -> String {
+    projects
+        .first()
+        .map(|f| f.to_string())
+        .unwrap_or_else(|| String::from("No projects found"))
 }
