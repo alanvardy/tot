@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 2023-01-07 v0.1.2
+
+- Add a hide project button
+
 ## 2023-01-04 v0.1.1
 
 - Can select a project from `tod` config
