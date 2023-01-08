@@ -124,10 +124,7 @@ pub fn get_or_create(config_path: Option<&str>) -> Result<Config, String> {
         // This moves it to new path
         let legacy_path = generate_legacy_path()?;
         if path_exists(&legacy_path) {
-            println!(
-                "INFO: Moving the config file from \"{}\" to \"{}\".\n",
-                legacy_path, path
-            );
+            println!("INFO: Moving the config file from \"{legacy_path}\" to \"{path}\".\n");
             fs::rename(legacy_path, &path).map_err(|e| e.to_string())?;
         }
     }
@@ -164,7 +161,7 @@ pub fn generate_path() -> Result<String, String> {
         .to_str()
         .ok_or_else(|| String::from("Could not convert config directory to string"))?
         .to_owned();
-    Ok(format!("{}/{}", config_directory, filename))
+    Ok(format!("{config_directory}/{filename}"))
 }
 
 pub fn generate_legacy_path() -> Result<String, String> {
@@ -175,7 +172,7 @@ pub fn generate_legacy_path() -> Result<String, String> {
         .to_str()
         .ok_or_else(|| String::from("Could not convert directory to string"))?
         .to_owned();
-    Ok(format!("{}/{}", home_directory, filename))
+    Ok(format!("{home_directory}/{filename}"))
 }
 
 pub fn get_input(desc: &str) -> Result<String, String> {
@@ -184,7 +181,7 @@ pub fn get_input(desc: &str) -> Result<String, String> {
     }
 
     let mut input = String::new();
-    println!("{}", desc);
+    println!("{desc}");
     io::stdin()
         .read_line(&mut input)
         .or(Err("error: unable to read user input"))?;

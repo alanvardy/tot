@@ -54,7 +54,7 @@ impl Item {
                 let recurring_icon = if *is_recurring { " ↻" } else { "" };
                 let date_string = time::format_date(date, config);
 
-                format!("\nDue: {}{}", date_string, recurring_icon)
+                format!("\nDue: {date_string}{recurring_icon}")
             }
             Ok(DateTimeInfo::DateTime {
                 datetime,
@@ -63,7 +63,7 @@ impl Item {
                 let recurring_icon = if *is_recurring { " ↻" } else { "" };
                 let datetime_string = time::format_datetime(datetime, config);
 
-                format!("\nDue: {}{}", datetime_string, recurring_icon)
+                format!("\nDue: {datetime_string}{recurring_icon}")
             }
             Ok(DateTimeInfo::NoDateTime) => String::from(""),
             Err(string) => string.clone(),
@@ -179,7 +179,7 @@ pub fn json_to_items(json: String) -> Result<Vec<Item>, String> {
     let result: Result<Body, _> = serde_json::from_str(&json);
     match result {
         Ok(body) => Ok(body.items),
-        Err(err) => Err(format!("Could not parse response for item: {:?}", err)),
+        Err(err) => Err(format!("Could not parse response for item: {err:?}")),
     }
 }
 
