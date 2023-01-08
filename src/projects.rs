@@ -6,8 +6,7 @@ pub fn project_id(config: &Config, project_name: &str) -> Result<String, String>
         .projects
         .get(project_name)
         .ok_or(format!(
-            "Project {} not found, please add it to config",
-            project_name
+            "Project {project_name} not found, please add it to config"
         ))?
         .to_string();
 

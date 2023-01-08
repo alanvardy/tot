@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Show a spinner and don't block main process when completing a task
+
 ## 2023-01-07 v0.1.3
 
 - Add a hide project button

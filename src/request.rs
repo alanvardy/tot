@@ -52,12 +52,12 @@ fn post_todoist_sync(
     #[cfg(test)]
     let todoist_url: &str = &mockito::server_url();
 
-    let request_url = format!("{}{}", todoist_url, url);
+    let request_url = format!("{todoist_url}{url}");
 
     let response = Client::new()
         .post(request_url)
         .header(CONTENT_TYPE, "application/json")
-        .header(AUTHORIZATION, format!("Bearer {}", token))
+        .header(AUTHORIZATION, format!("Bearer {token}"))
         .json(&body)
         .send()
         .or(Err("Did not get response from server"))?;

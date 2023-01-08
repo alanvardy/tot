@@ -1,6 +1,10 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
+use core::time::Duration;
 use eframe::egui;
+use std::sync::mpsc;
+use std::thread;
+
 mod config;
 mod items;
 mod projects;
@@ -25,21 +29,37 @@ fn main() {
     )
 }
 
+#[derive(Clone)]
+enum State {
+    // Clear the screen and prepare to fetch
+    BeginFetch,
+    // Spawn a thread and fetch in the background
+    Fetching,
+    // Fetch is complete, show the results
+    DoneFetch { text: Option<String> },
+}
+
 struct MyApp {
-    text: Option<String>,
     projects: Vec<String>,
     project: String,
+    state: State,
+    tx: mpsc::Sender<Option<String>>,
+    rx: mpsc::Receiver<Option<String>>,
 }
 
 impl Default for MyApp {
     fn default() -> Self {
         let projects = projects();
         let project = get_first_project(projects.clone());
+        let text = get_next(project.clone());
+        let (tx, rx) = mpsc::channel();
 
         Self {
-            text: get_next(project.clone()),
+            state: State::DoneFetch { text },
             projects,
             project,
+            tx,
+            rx,
         }
     }
 }
@@ -49,27 +69,41 @@ impl Default for MyApp {
 impl eframe::App for MyApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::CentralPanel::default().show(ctx, |ui| {
-            let text = self
-                .text
-                .clone()
-                .unwrap_or_else(|| "\nNo tasks remaining".to_string());
             ui.with_layout(egui::Layout::top_down(egui::Align::Center), |ui| {
                 ui.label("The One Thing");
                 ui.label(String::new());
-                ui.heading(text);
-                ui.label(String::new());
-                ui.vertical_centered(|ui| {
-                    if self.text.is_some() {
-                        if ui.button("Complete ✔").clicked() {
-                            self.text = complete(self.project.clone());
+
+                ui.vertical_centered(|ui| match self.state.clone() {
+                    State::BeginFetch => {
+                        ui.add(egui::Spinner::new());
+                        spawn_complete_task(self.project.clone(), self.tx.clone());
+                        self.state = State::Fetching;
+                    }
+
+                    State::Fetching => {
+                        ui.add(egui::Spinner::new());
+
+                        if let Ok(text) = self.rx.try_recv() {
+                            self.state = State::DoneFetch { text };
                         }
-                        ui.label(String::new());
-                    } else {
-                        ui.label(String::new());
-                        ui.label(String::new());
-                    };
-                    if ui.button("Hide Project 🗙").clicked() {
-                        hide(self.project.clone(), self);
+                    }
+
+                    State::DoneFetch { text } => {
+                        if let Some(text) = text {
+                            ui.heading(text);
+                            ui.label(String::new());
+                            if ui.button("Complete ✔").clicked() {
+                                self.state = State::BeginFetch;
+                            }
+                            ui.label(String::new());
+                        } else {
+                            ui.heading(String::from("\nNo tasks remaining"));
+                            ui.label(String::new());
+                            ui.label(String::new());
+                        };
+                        if ui.button("Hide Project 🗙").clicked() {
+                            hide(self.project.clone(), self);
+                        }
                     }
                 });
             });
@@ -83,12 +117,15 @@ impl eframe::App for MyApp {
                     } else {
                         if ui.button(project).clicked() {
                             self.project = project.to_string();
-                            self.text = get_next(self.project.clone());
+                            self.state = State::DoneFetch {
+                                text: get_next(self.project.clone()),
+                            };
                         }
                     }
                 }
             });
         });
+        ctx.request_repaint_after(Duration::new(0, 100));
     }
 }
 
@@ -114,14 +151,22 @@ fn get_next(project: String) -> Option<String> {
     }
 }
 
-fn complete(project: String) -> Option<String> {
+fn spawn_complete_task(project: String, tx: mpsc::Sender<Option<String>>) {
+    thread::spawn(|| complete(project, tx));
+}
+
+fn complete(project: String, tx: mpsc::Sender<Option<String>>) {
     match config::get_or_create(None) {
         Ok(config) => {
             request::complete_item(config).unwrap();
-            get_next(project)
+            match get_next(project) {
+                Some(text) => tx.send(Some(text)),
+                None => tx.send(None),
+            }
         }
-        Err(_e) => None,
+        Err(_e) => tx.send(None),
     }
+    .unwrap();
 }
 
 fn hide(project: String, state: &mut MyApp) {
@@ -136,7 +181,9 @@ fn hide(project: String, state: &mut MyApp) {
 
     state.projects = projects;
     state.project = project.clone();
-    state.text = get_next(project);
+    state.state = State::DoneFetch {
+        text: get_next(project),
+    };
 }
 
 fn get_first_project(projects: Vec<String>) -> String {
