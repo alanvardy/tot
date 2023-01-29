@@ -7,3 +7,8 @@ A tiny GUI for doing the next thing on your Todoist list by priority.
 ![TOT](tot.png)
 
 Requires [tod](https://github.com/alanvardy/tod) to be installed and run at least once.
+
+## Keyboard Shortcuts
+
+- `c` Complete task
+- `h` Hide project

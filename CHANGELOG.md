@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Add keyboard shortcut c for complete task
+- Add keyboard shortcut h for hide project
+
 ## 2023-01-29 v0.1.4
 
 - Show a spinner and don't block the main process when completing a task

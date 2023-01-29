@@ -96,6 +96,14 @@ impl eframe::App for MyApp {
                                 self.state = State::BeginFetch;
                             }
                             ui.label(String::new());
+                            let events = ui.input().events.clone();
+                            for event in &events {
+                                if let egui::Event::Text(t) = event {
+                                    if t == "c" {
+                                        self.state = State::BeginFetch;
+                                    }
+                                }
+                            }
                         } else {
                             ui.heading(String::from("\nNo tasks remaining"));
                             ui.label(String::new());
@@ -103,6 +111,14 @@ impl eframe::App for MyApp {
                         };
                         if ui.button("Hide Project 🗙").clicked() {
                             hide(self.project.clone(), self);
+                        }
+                        let events = ui.input().events.clone();
+                        for event in &events {
+                            if let egui::Event::Text(t) = event {
+                                if t == "h" {
+                                    hide(self.project.clone(), self);
+                                }
+                            }
                         }
                     }
                 });
