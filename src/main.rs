@@ -27,6 +27,7 @@ fn main() {
         options,
         Box::new(|_cc| Box::<MyApp>::default()),
     )
+    .unwrap();
 }
 
 #[derive(Clone)]
@@ -96,13 +97,8 @@ impl eframe::App for MyApp {
                                 self.state = State::BeginFetch;
                             }
                             ui.label(String::new());
-                            let events = ui.input().events.clone();
-                            for event in &events {
-                                if let egui::Event::Text(t) = event {
-                                    if t == "c" {
-                                        self.state = State::BeginFetch;
-                                    }
-                                }
+                            if ui.input(|i| i.key_pressed(egui::Key::C)) {
+                                self.state = State::BeginFetch;
                             }
                         } else {
                             ui.heading(String::from("\nNo tasks remaining"));
@@ -112,13 +108,8 @@ impl eframe::App for MyApp {
                         if ui.button("Hide Project 🗙").clicked() {
                             hide(self.project.clone(), self);
                         }
-                        let events = ui.input().events.clone();
-                        for event in &events {
-                            if let egui::Event::Text(t) = event {
-                                if t == "h" {
-                                    hide(self.project.clone(), self);
-                                }
-                            }
+                        if ui.input(|i| i.key_pressed(egui::Key::H)) {
+                            hide(self.project.clone(), self);
                         }
                     }
                 });

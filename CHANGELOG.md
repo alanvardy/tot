@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Update dependencies
+
 ## 2023-02-03 v0.1.5
 
 - Add keyboard shortcut c for complete task
