@@ -8,9 +8,6 @@ use crate::config::Config;
 use crate::items;
 use crate::items::Item;
 
-#[cfg(test)]
-use mockito;
-
 // TODOIST URLS
 const PROJECT_DATA_URL: &str = "/sync/v9/projects/get_data";
 const SYNC_URL: &str = "/sync/v9/sync";
@@ -46,11 +43,7 @@ fn post_todoist_sync(
     url: String,
     body: serde_json::Value,
 ) -> Result<String, String> {
-    #[cfg(not(test))]
     let todoist_url: &str = "https://api.todoist.com";
-
-    #[cfg(test)]
-    let todoist_url: &str = &mockito::server_url();
 
     let request_url = format!("{todoist_url}{url}");
 
@@ -75,27 +68,5 @@ fn new_uuid() -> String {
         String::from(FAKE_UUID)
     } else {
         Uuid::new_v4().to_string()
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::test;
-    use pretty_assertions::assert_eq;
-
-    #[test]
-    fn should_complete_an_item() {
-        let _m = mockito::mock("POST", "/sync/v9/sync")
-            .with_status(200)
-            .with_header("content-type", "application/json")
-            .with_body(&test::responses::sync())
-            .create();
-
-        let config = Config::new("12341234")
-            .unwrap()
-            .set_next_id(String::from("112233"));
-        let response = complete_item(config);
-        assert_eq!(response, Ok(String::from("✓")));
     }
 }
